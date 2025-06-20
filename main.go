@@ -18,6 +18,7 @@ func main() {
 		SetTextAlign(tview.AlignCenter).
 		SetText("GoDo - Go And Do :)) https://github.com/biisal/godo").
 		SetDynamicColors(true)
+
 	todoUI := &action.TodoUI{
 		App:          tview.NewApplication(),
 		Form:         tview.NewForm(),
@@ -37,17 +38,18 @@ func main() {
 	rightSide := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(todoUI.Form, 0, 1, false).AddItem(todoUI.Instructions, 0, 1, false)
 
-	focusForm := false
 	todoUI.App.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyRight || event.Key() == tcell.KeyLeft {
-			if focusForm {
+			if action.FocusForm {
 				todoUI.App.SetFocus(todoUI.TodoList)
 			} else {
 				todoUI.App.SetFocus(todoUI.Form)
 			}
-			focusForm = !focusForm
+			action.FocusForm = !action.FocusForm
 		} else if event.Key() == tcell.KeyEsc {
 			todoUI.App.Stop()
+		} else if event.Key() == tcell.KeyDelete {
+			todoUI.DeleteTodo(todoUI.TodoList.GetCurrentItem() + 1)
 		}
 		return event
 	})

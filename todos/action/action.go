@@ -15,18 +15,10 @@ import (
 	"github.com/rivo/tview"
 )
 
-var TodoFilePath string
-
-func init() {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic("Failed to get user home directory: " + err.Error())
-	}
-	TodoFilePath = home + "/.local/share/godo/todos.json"
-}
-
 var (
+	TodoFilePath string
 	TodosCount   = 0
+	FocusForm    = false
 	Instructions = []string{
 		"Use Right > or Left < to toggle between form and list",
 		"Use Tab to toggle between form inputs or todos",
@@ -35,6 +27,14 @@ var (
 		"Esc/Ctrl+C to quit",
 	}
 )
+
+func init() {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic("Failed to get user home directory: " + err.Error())
+	}
+	TodoFilePath = home + "/.local/share/godo/todos.json"
+}
 
 type TodoUI struct {
 	App          *tview.Application
@@ -182,6 +182,7 @@ func (b *TodoUI) SetUpForm() {
 			b.SetUpInstructions("")
 			b.App.SetFocus(b.TodoList)
 			b.TodoList.SetCurrentItem(TodosCount)
+			FocusForm = !FocusForm
 
 		} else {
 			if strings.HasPrefix(err.Error(), "empty") {
