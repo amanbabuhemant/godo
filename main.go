@@ -16,7 +16,7 @@ func main() {
 	tview.Styles.PrimaryTextColor = tcell.NewHexColor(0x00f5ff)
 	title := tview.NewTextView().
 		SetTextAlign(tview.AlignCenter).
-		SetText("GoDo - Go And Do :))").
+		SetText("GoDo - Go And Do :)) https://github.com/biisal/godo").
 		SetDynamicColors(true)
 	todoUI := &action.TodoUI{
 		App:          tview.NewApplication(),
