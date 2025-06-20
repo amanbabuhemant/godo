@@ -16,7 +16,7 @@ func main() {
 	tview.Styles.PrimaryTextColor = tcell.NewHexColor(0x00f5ff)
 	title := tview.NewTextView().
 		SetTextAlign(tview.AlignCenter).
-		SetText("GoDo - Go And Do :)) https://github.com/biisal/godo").
+		SetText("GoDo - Go And Do :))").
 		SetDynamicColors(true)
 
 	todoUI := &action.TodoUI{
@@ -31,6 +31,10 @@ func main() {
 	todoUI.SetUpList()
 	todoUI.SetUpForm()
 	todoUI.SetUpInstructions("")
+	todoUI.TodoList.ShowSecondaryText(false)
+	todoUI.TodoList.SetHighlightFullLine(true)
+	todoUI.TodoList.SetSelectedBackgroundColor(tcell.NewHexColor(0x00f5ff))
+	todoUI.TodoList.SetSelectedTextColor(tcell.NewHexColor(0x000000))
 
 	leftSide := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(todoUI.TodoList, 0, 2, true).
