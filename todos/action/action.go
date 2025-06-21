@@ -25,6 +25,9 @@ var (
 		"Use Enter on todos to Toggle Done",
 		"For delete enter id of todo and press Del",
 		"Esc/Ctrl+C to quit",
+		"",
+		"",
+		"Repo: https://github.com/biisal/godo",
 	}
 )
 
@@ -105,15 +108,23 @@ func (b *TodoUI) RefreshTodoList() {
 	if err != nil {
 		return
 	}
+	total_todos := len(todos)
 	for index, todo := range todos {
+		id := index + 1
+		id_pad := ""
+		for len(strconv.Itoa(total_todos)) > len(id_pad) + len(strconv.Itoa(id)){
+			id_pad = " " + id_pad
+		}
+
 		doneText := "⨯"
+		done_color := ""
 		if todo.Done {
 			doneText = "✓"
+			done_color = "[#508878]"
 		}
-		b.TodoList.AddItem(fmt.Sprintf("[%d][%s] %s", todo.ID, doneText, todo.Title), "", 0, func() {
+		b.TodoList.AddItem(fmt.Sprintf("%s[%s%d] [%s] │ %s", done_color, id_pad, todo.ID, doneText, todo.Title), "", 0, func() {
 			b.MarkDone(todo.ID)
 			b.TodoList.SetCurrentItem(index)
-
 		})
 	}
 
