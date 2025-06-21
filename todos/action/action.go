@@ -2,13 +2,13 @@ package action
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
-	"strings"
 
 	"github.com/biisal/godo/todos/models"
 	"github.com/gdamore/tcell/v2"
@@ -29,6 +29,7 @@ var (
 		"",
 		"Repo: https://github.com/biisal/godo",
 	}
+	ErrorEmpty = errors.New("Empty title or description cannot be your todo :)")
 )
 
 func init() {
@@ -147,7 +148,7 @@ func (b *TodoUI) DeleteTodo(id int) error {
 
 func (b *TodoUI) AddTodo(title, description string) error {
 	if title == "" || description == "" {
-		return fmt.Errorf("empty title and description cannot be your todo :)")
+		return ErrorEmpty
 	}
 	todo := models.Todo{
 		ID:          TodosCount + 1,
@@ -191,7 +192,7 @@ func (b *TodoUI) SetUpForm() {
 			FocusForm = !FocusForm
 
 		} else {
-			if strings.HasPrefix(err.Error(), "empty") {
+			if err == ErrorEmpty {
 				b.SetUpInstructions("\n" + err.Error())
 			}
 		}
