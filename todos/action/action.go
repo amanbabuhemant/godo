@@ -108,26 +108,21 @@ func (b *TodoUI) RefreshTodoList() {
 	if err != nil {
 		return
 	}
-	total_todos := len(todos)
+	maxIDLen := len(strconv.Itoa(TodosCount))
 	for index, todo := range todos {
-		id := index + 1
-		id_pad := ""
-		for len(strconv.Itoa(total_todos)) > len(id_pad) + len(strconv.Itoa(id)){
-			id_pad = " " + id_pad
-		}
+		idStr := fmt.Sprintf("%0*d", maxIDLen, todo.ID)
 
 		doneText := "⨯"
-		done_color := ""
+		doneColor := ""
 		if todo.Done {
 			doneText = "✓"
-			done_color = "[#508878]"
+			doneColor = "[#508878]"
 		}
-		b.TodoList.AddItem(fmt.Sprintf("%s[%s%d] [%s] │ %s", done_color, id_pad, todo.ID, doneText, todo.Title), "", 0, func() {
+		b.TodoList.AddItem(fmt.Sprintf("%s[%s] [%s] │ %s", doneColor, idStr, doneText, todo.Title), "", 0, func() {
 			b.MarkDone(todo.ID)
 			b.TodoList.SetCurrentItem(index)
 		})
 	}
-
 }
 
 func (b *TodoUI) DeleteTodo(id int) error {
@@ -229,6 +224,11 @@ func (b *TodoUI) SetUpList() {
 				b.Description.SetText(todos[index].Description)
 			}
 		}).SetBackgroundColor(tcell.ColorDefault).SetBorder(true).SetTitle(" WE HAVE TO DO THIS ")
+	b.TodoList.ShowSecondaryText(false)
+	b.TodoList.SetHighlightFullLine(true)
+	b.TodoList.SetSelectedBackgroundColor(tcell.NewHexColor(0x00f5ff))
+	b.TodoList.SetSelectedTextColor(tcell.NewHexColor(0x000000))
+
 }
 
 func (b *TodoUI) SetUpInstructions(appendText string) {

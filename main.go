@@ -31,10 +31,6 @@ func main() {
 	todoUI.SetUpList()
 	todoUI.SetUpForm()
 	todoUI.SetUpInstructions("")
-	todoUI.TodoList.ShowSecondaryText(false)
-	todoUI.TodoList.SetHighlightFullLine(true)
-	todoUI.TodoList.SetSelectedBackgroundColor(tcell.NewHexColor(0x00f5ff))
-	todoUI.TodoList.SetSelectedTextColor(tcell.NewHexColor(0x000000))
 
 	leftSide := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(todoUI.TodoList, 0, 2, true).
