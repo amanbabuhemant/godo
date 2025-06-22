@@ -26,7 +26,7 @@ var (
 	TodosCount    = 0
 	NotesCount    = 0
 	Instructions  = []string{
-		"Use Right > or Left < to toggle between form and list",
+		"Use Ctrl+Right > or Ctrl+Left < to toggle between form and list",
 		"Use Tab to toggle between form inputs or todos",
 		"Use Enter on todos to Toggle Done",
 		"For delete enter id of todo and press Del",
@@ -240,6 +240,7 @@ func (b *TodoUI) SetUpForm() {
 			b.SetUpInstructions("")
 			b.App.SetFocus(b.TodoList)
 			b.TodoList.SetCurrentItem(TodosCount)
+			CurrentFocus = 0
 
 		} else {
 			if errors.Is(err, ErrorEmpty) {
@@ -254,6 +255,7 @@ func (b *TodoUI) SetUpForm() {
 			b.SetUpInstructions("")
 			b.App.SetFocus(b.NoteList)
 			b.TodoList.SetCurrentItem(NotesCount)
+			CurrentFocus = 1
 
 		} else {
 			if errors.Is(err, ErrorEmpty) {
