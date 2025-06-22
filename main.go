@@ -1,12 +1,12 @@
 package main
 
 import (
+	"log"
+
 	"github.com/biisal/godo/todos/action"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
-
-var ()
 
 func main() {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
@@ -44,21 +44,30 @@ func main() {
 		AddItem(todoUI.Form, 0, 1, false).AddItem(todoUI.Instructions, 0, 1, false)
 
 	todoUI.App.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyRight:
+
+		prevFocus := action.CurrentFocus
+		ctrlKey := event.Modifiers()&tcell.ModCtrl != 0
+
+		switch {
+		case event.Key() == tcell.KeyRight && ctrlKey:
 			action.CurrentFocus = (action.CurrentFocus + 1) % len(focusModes)
-		case tcell.KeyLeft:
+		case event.Key() == tcell.KeyLeft && ctrlKey:
 			action.CurrentFocus = (action.CurrentFocus - 1 + len(focusModes)) % len(focusModes)
-		case tcell.KeyEsc:
+		case event.Key() == tcell.KeyEscape:
 			todoUI.App.Stop()
-		case tcell.KeyDelete:
+		case event.Key() == tcell.KeyEnter:
 			if action.CurrentFocus == 0 {
 				todoUI.DeleteItem(action.TodoMode, todoUI.TodoList.GetCurrentItem())
 			} else {
 				todoUI.DeleteItem(action.NoteMode, todoUI.NoteList.GetCurrentItem()+1)
 			}
 		}
-		todoUI.App.SetFocus(focusModes[action.CurrentFocus])
+
+		if prevFocus != action.CurrentFocus {
+			todoUI.SetDescriptionOnFocus()
+			todoUI.App.SetFocus(focusModes[action.CurrentFocus])
+		}
+
 		return event
 	})
 
@@ -71,7 +80,8 @@ func main() {
 
 	todoUI.RefreshItemList(action.TodoMode)
 	todoUI.RefreshItemList(action.NoteMode)
+
 	if err := todoUI.App.Run(); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }

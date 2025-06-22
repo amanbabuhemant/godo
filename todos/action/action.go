@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/biisal/godo/todos/models"
 	"github.com/gdamore/tcell/v2"
@@ -21,11 +22,9 @@ var (
 	TodoMode      = "todoMod"
 	NoteMode      = "noteMod"
 	FormMode      = "formMod"
-	Modes         = []string{TodoMode, NoteMode, FormMode}
 	CurrentFocus  = 0
 	TodosCount    = 0
 	NotesCount    = 0
-	FocusForm     = false
 	Instructions  = []string{
 		"Use Right > or Left < to toggle between form and list",
 		"Use Tab to toggle between form inputs or todos",
@@ -36,7 +35,7 @@ var (
 		"",
 		"Repo: https://github.com/biisal/godo",
 	}
-	ErrorEmpty = errors.New("Empty title or description cannot be your todo :)")
+	ErrorEmpty = errors.New("Empty title or description cannot be your todo  or note :)")
 )
 
 func init() {
@@ -92,6 +91,11 @@ func GetItems(mode string) ([]models.Item, error) {
 		NotesCount = len(items)
 	}
 	return items, nil
+}
+
+func GetDescriptionStr(item models.Item) string {
+	pad := strings.Repeat(" ", len(strconv.Itoa(item.ID)))
+	return fmt.Sprintf("[%d] [#ff00fe]%s[-]\n %s  Description: [#00ff8d]%s", item.ID, item.Title, pad, item.Description)
 }
 
 func WriteItem(mode string, items []models.Item) error {
@@ -199,6 +203,27 @@ func (b *TodoUI) AddItem(mode, title, description string) error {
 	return nil
 }
 
+func (b *TodoUI) SetDescriptionOnFocus() {
+	var items []models.Item
+	var curentIdx int
+	if CurrentFocus != 0 && CurrentFocus != 1 {
+		return
+	}
+	b.Description.Clear()
+	if CurrentFocus == 0 {
+		items, _ = GetItems(TodoMode)
+		curentIdx = b.TodoList.GetCurrentItem()
+
+	} else {
+		items, _ = GetItems(NoteMode)
+		curentIdx = b.NoteList.GetCurrentItem()
+	}
+	if len(items) <= curentIdx {
+		return
+	}
+	b.Description.SetText(GetDescriptionStr(items[curentIdx]))
+}
+
 func (b *TodoUI) SetUpForm() {
 	titleInput := tview.NewInputField().
 		SetLabel("Title: ").SetFieldBackgroundColor(tcell.ColorRed)
@@ -207,10 +232,7 @@ func (b *TodoUI) SetUpForm() {
 	descriptionInput := tview.NewInputField().SetLabel("Description: ").SetFieldBackgroundColor(tcell.ColorBlack)
 	descriptionInput.SetFieldTextColor(tcell.ColorWhite)
 
-	deleteIdInput := tview.NewInputField().SetLabel("ID (for delete) : ").SetFieldBackgroundColor(tcell.ColorBlack)
-	deleteIdInput.SetFieldTextColor(tcell.ColorWhite)
-
-	b.Form.AddFormItem(titleInput).AddFormItem(descriptionInput).AddButton("Add", func() {
+	b.Form.AddFormItem(titleInput).AddFormItem(descriptionInput).AddButton("Todo++", func() {
 		err := b.AddItem(TodoMode, titleInput.GetText(), descriptionInput.GetText())
 		if err == nil {
 			titleInput.SetText("")
@@ -218,28 +240,20 @@ func (b *TodoUI) SetUpForm() {
 			b.SetUpInstructions("")
 			b.App.SetFocus(b.TodoList)
 			b.TodoList.SetCurrentItem(TodosCount)
-			FocusForm = !FocusForm
 
 		} else {
 			if errors.Is(err, ErrorEmpty) {
 				b.SetUpInstructions("\n" + err.Error())
 			}
 		}
-	}).AddFormItem(deleteIdInput).AddButton("Delete", func() {
-		id, err := strconv.Atoi(deleteIdInput.GetText())
-		if err != nil {
-			return
-		}
-		b.DeleteItem(TodoMode, id)
-	}).AddButton("Add Note", func() {
+	}).AddButton("Note++", func() {
 		err := b.AddItem(NoteMode, titleInput.GetText(), descriptionInput.GetText())
 		if err == nil {
 			titleInput.SetText("")
 			descriptionInput.SetText("")
 			b.SetUpInstructions("")
-			b.App.SetFocus(b.TodoList)
-			b.TodoList.SetCurrentItem(TodosCount)
-			FocusForm = !FocusForm
+			b.App.SetFocus(b.NoteList)
+			b.TodoList.SetCurrentItem(NotesCount)
 
 		} else {
 			if errors.Is(err, ErrorEmpty) {
@@ -247,12 +261,19 @@ func (b *TodoUI) SetUpForm() {
 			}
 		}
 	}).
-		AddButton("Clear", func() {
+		AddButton("Clear Todos", func() {
 			err := os.Remove(TodoFilePath)
 			if err != nil {
 				b.SetUpInstructions("\n" + err.Error())
 			}
 			b.RefreshItemList(TodoMode)
+		}).
+		AddButton("Clear Notes", func() {
+			err := os.Remove(NotesFilePath)
+			if err != nil {
+				b.SetUpInstructions("\n" + err.Error())
+			}
+			b.RefreshItemList(NoteMode)
 		})
 
 	b.Form.SetBackgroundColor(tcell.ColorDefault).SetBorder(true).SetTitle(" ADD OR DEL A TODO ")
@@ -267,9 +288,9 @@ func (b *TodoUI) SetUpList() {
 			b.Description.Clear()
 			todos, _ := GetItems(TodoMode)
 			if index < len(todos) {
-				b.Description.SetText(todos[index].Description)
+				b.Description.SetText(GetDescriptionStr(todos[index]))
 			}
-		}).SetBackgroundColor(tcell.ColorDefault).SetBorder(true).SetTitle(" NOTES ")
+		}).SetBackgroundColor(tcell.ColorDefault).SetBorder(true).SetTitle(" WE HAVE TO DO THIS ")
 	b.TodoList.ShowSecondaryText(false)
 	b.TodoList.SetHighlightFullLine(true)
 	b.TodoList.SetSelectedBackgroundColor(tcell.NewHexColor(0x00f5ff))
@@ -285,9 +306,9 @@ func (b *TodoUI) SetUpNoteList() {
 			b.Description.Clear()
 			todos, _ := GetItems(NoteMode)
 			if index < len(todos) {
-				b.Description.SetText(todos[index].Description)
+				b.Description.SetText(GetDescriptionStr(todos[index]))
 			}
-		}).SetBackgroundColor(tcell.ColorDefault).SetBorder(true).SetTitle(" WE HAVE TO DO THIS ")
+		}).SetBackgroundColor(tcell.ColorDefault).SetBorder(true).SetTitle(" NOTES ")
 	b.NoteList.ShowSecondaryText(false)
 	b.NoteList.SetHighlightFullLine(true)
 	b.NoteList.SetSelectedBackgroundColor(tcell.NewHexColor(0x00f5ff))
