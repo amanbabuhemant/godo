@@ -1,6 +1,7 @@
 package models
 
-type Todo struct {
+// can be todo or note
+type Item struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`

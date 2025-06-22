@@ -23,34 +23,42 @@ func main() {
 		App:          tview.NewApplication(),
 		Form:         tview.NewForm(),
 		TodoList:     tview.NewList(),
+		NoteList:     tview.NewList(),
 		Instructions: tview.NewTextView(),
 		Description:  tview.NewTextView(),
 	}
+	var focusModes = []tview.Primitive{todoUI.TodoList, todoUI.NoteList, todoUI.Form}
 
-	todoUI.SetUpDescription()
 	todoUI.SetUpList()
+	todoUI.SetUpNoteList()
+	todoUI.SetUpDescription()
 	todoUI.SetUpForm()
 	todoUI.SetUpInstructions("")
 
+	leftTop := tview.NewFlex().SetDirection(tview.FlexColumn).AddItem(todoUI.TodoList, 0, 1, true).AddItem(todoUI.NoteList, 0, 1, false)
+
 	leftSide := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(todoUI.TodoList, 0, 2, true).
+		AddItem(leftTop, 0, 2, true).
 		AddItem(todoUI.Description, 0, 1, false)
 	rightSide := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(todoUI.Form, 0, 1, false).AddItem(todoUI.Instructions, 0, 1, false)
 
 	todoUI.App.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyRight || event.Key() == tcell.KeyLeft {
-			if action.FocusForm {
-				todoUI.App.SetFocus(todoUI.TodoList)
-			} else {
-				todoUI.App.SetFocus(todoUI.Form)
-			}
-			action.FocusForm = !action.FocusForm
-		} else if event.Key() == tcell.KeyEsc {
+		switch event.Key() {
+		case tcell.KeyRight:
+			action.CurrentFocus = (action.CurrentFocus + 1) % len(focusModes)
+		case tcell.KeyLeft:
+			action.CurrentFocus = (action.CurrentFocus - 1 + len(focusModes)) % len(focusModes)
+		case tcell.KeyEsc:
 			todoUI.App.Stop()
-		} else if event.Key() == tcell.KeyDelete {
-			todoUI.DeleteTodo(todoUI.TodoList.GetCurrentItem() + 1)
+		case tcell.KeyDelete:
+			if action.CurrentFocus == 0 {
+				todoUI.DeleteItem(action.TodoMode, todoUI.TodoList.GetCurrentItem())
+			} else {
+				todoUI.DeleteItem(action.NoteMode, todoUI.NoteList.GetCurrentItem()+1)
+			}
 		}
+		todoUI.App.SetFocus(focusModes[action.CurrentFocus])
 		return event
 	})
 
@@ -61,8 +69,8 @@ func main() {
 			AddItem(rightSide, 0, 1, false), 0, 1, true)
 	todoUI.App.SetRoot(root, true)
 
-	todoUI.RefreshTodoList()
-
+	todoUI.RefreshItemList(action.TodoMode)
+	todoUI.RefreshItemList(action.NoteMode)
 	if err := todoUI.App.Run(); err != nil {
 		panic(err)
 	}
